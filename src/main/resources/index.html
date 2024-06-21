@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Controller</title>
+    <style>
+        body {
+            margin: 0;
+            height: 50vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: darkgrey;
+        }
+        button {
+            text-align: center;
+            font-size: 18px;
+            width: 96px;
+            height: 64px;
+            margin-right: 4px;
+        }
+        div {
+            padding: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <button id="btn-up">up</button>
+    <button id="btn-down">down</button>
+</div>
+<div>
+    <button id="btn-left">left</button>
+    <button id="btn-right">right</button>
+</div>
+
+<script type="text/javascript">
+        const keyState = new Int32Array([0,0,0,0]);
+
+        const buttonLeft = document.getElementById("btn-left");
+        const buttonRight = document.getElementById("btn-right");
+        const buttonUp = document.getElementById("btn-up");
+        const buttonDown = document.getElementById("btn-down");
+
+        ["mousedown", "touchstart"].forEach(type => {
+            buttonLeft.addEventListener(type, () => {keyState[0] = -100;});
+            buttonRight.addEventListener(type, () => {keyState[0] = 100;});
+            buttonUp.addEventListener(type, () => {keyState[1] = 100;});
+            buttonDown.addEventListener(type, () => {keyState[1] = -100;});
+        });
+
+        ["mouseup", "mouseleave", "mouseout", "touchend", "touchcancel"].forEach(type => {
+            buttonLeft.addEventListener(type, () => {keyState[0] = 0;});
+            buttonRight.addEventListener(type, () => {keyState[0] = 0;});
+            buttonUp.addEventListener(type, () => {keyState[1] = 0;});
+            buttonDown.addEventListener(type, () => {keyState[1] = 0;});
+        });
+
+        document.addEventListener('keydown', (event) => {
+            switch(event.keyCode) {
+                case 37:
+                    keyState[0] = -100;
+                    break;
+                case 39:
+                    keyState[0] = 100;
+                    break;
+                case 38:
+                    keyState[1] = 100;
+                    break;
+                case 40:
+                    keyState[1] = -100;
+            };
+        }, false);
+
+        document.addEventListener('keyup', (event) => {
+            switch(event.keyCode) {
+                case 37:
+                    keyState[0] = 0;
+                    break;
+                case 39:
+                    keyState[0] = 0;
+                    break;
+                case 38:
+                    keyState[1] = 0;
+                    break;
+                case 40:
+                    keyState[1] = 0;
+            };
+        }, false);
+
+        const ws = new WebSocket("ws://" + window.location.host + ":${port}/control");
+
+        function sendKeyState() {
+            ws.send(keyState);
+        }
+
+        let intervalId = setInterval(sendKeyState, 1000/30);
+</script>
+</body>
+</html>
