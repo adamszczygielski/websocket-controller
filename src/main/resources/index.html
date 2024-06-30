@@ -2,40 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
     <title>Controller</title>
     <style>
+        html, body, #fullheight {
+            height: 100%;
+            min-height: 100% !important;
+            user-select: none; /* Standard syntax */
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10 and IE 11 */
+        }
         body {
             margin: 0;
-            height: 50vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
             background-color: darkgrey;
         }
         button {
             text-align: center;
-            font-size: 18px;
-            width: 96px;
-            height: 64px;
-            margin-right: 4px;
+            font-size: large;
+            width: 40%;
+            height: 95%;
         }
-        div {
-            padding: 2px;
+        #sldr-v {
+            width: 90%;
+            height: 90%;
+            writing-mode: vertical-lr;
+            direction: rtl;
+        }
+        #sldr-h {
+            width: 90%;
+            height: 90%;
         }
     </style>
 </head>
 <body>
-
-<div>
-    <button id="btn-up">up</button>
-    <button id="btn-down">down</button>
+<div style="width: 95%; height: 95%; justify-content: center; margin: auto; align-items: center">
+    <div style="width: 100%; height: 85%; flex-direction: row; display: flex">
+        <div style="width: 50%; flex-direction: row; display: flex; justify-content: left">
+            <input id="sldr-v" type="range" min="-100" max="100" value="0">
+        </div>
+        <div style="width: 50%; flex-direction: row; display: flex; justify-content: right">
+            <input id="sldr-h" type="range" min="-100" max="100" value="0">
+        </div>
+    </div>
+    <div style="width: 100%; height: 15%; flex-direction: row; display: flex; justify-content: center">
+        <div style="width: 50%; height: 100%; flex-direction: row; display: flex; justify-content: left">
+            <button id="btn-up" style="margin-right: 10%">Up</button>
+            <button id="btn-down">Down</button>
+        </div>
+        <div style="width: 50%; height: 100%; flex-direction: row; display: flex; justify-content: right">
+            <button id="btn-left">Left</button>
+            <button id="btn-right" style="margin-left: 10%">Right</button>
+        </div>
+    </div>
 </div>
-<div>
-    <button id="btn-left">left</button>
-    <button id="btn-right">right</button>
-</div>
-
 <script type="text/javascript">
         const keyState = new Int32Array([0,0,0,0]);
 
@@ -57,6 +77,27 @@
             buttonUp.addEventListener(type, () => {keyState[1] = 0;});
             buttonDown.addEventListener(type, () => {keyState[1] = 0;});
         });
+
+        const sliderHorizontal = document.getElementById("sldr-h");
+        const sliderVertical = document.getElementById("sldr-v");
+
+        sliderHorizontal.addEventListener("input", function() {
+            keyState[0] = this.value;
+        }, false);
+
+        sliderHorizontal.addEventListener("change", function() {
+            this.value = 0;
+            keyState[0] = 0;
+        }, false);
+
+        sliderVertical.addEventListener("input", function() {
+            keyState[1] = this.value;
+        }, false);
+
+        sliderVertical.addEventListener("change", function() {
+            this.value = 0;
+            keyState[1] = 0;
+        }, false);
 
         document.addEventListener('keydown', (event) => {
             switch(event.keyCode) {
@@ -90,10 +131,26 @@
             };
         }, false);
 
-        const ws = new WebSocket("ws://" + window.location.host + ":${port}/control");
+        const url = "ws://" + window.location.host + ":${port}/control";
+        let ws = new WebSocket(url);
 
         function sendKeyState() {
-            ws.send(keyState);
+            switch (ws.readyState) {
+                case ws.OPEN:
+                    ws.send(keyState);
+                    break;
+                case ws.CLOSED:
+                    reconnect();
+            };
+        }
+
+        let lastConnection = Date.now();
+
+        function reconnect() {
+            if (Date.now() > lastConnection + 5000) {
+                lastConnection = Date.now();
+                ws = new WebSocket(url);
+            }
         }
 
         let intervalId = setInterval(sendKeyState, 1000/30);
